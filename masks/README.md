@@ -1,0 +1,1 @@
+Masks are saved here by default but gitignored
