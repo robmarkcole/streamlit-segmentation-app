@@ -48,25 +48,25 @@ else: # for testing
     image_to_annotate = Image.open(DEFAULT_IMAGE)
     image_to_annotate_name = "test_mask.png"
 
-save_mask_filename = Path(mask_dir, image_to_annotate_name)
-
-if st.sidebar.button(f"Mark as 100% background and save"): # set every pixel to 0
-    mask_arr = np.zeros((DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE), dtype=np.uint8)
-    mask_img = Image.fromarray(mask_arr).convert('L')
-    mask_img.save(save_mask_filename)
-    st.sidebar.write(f"Saved {save_mask_filename}")
-
-if st.sidebar.button(f"Mark as 100% target and save"): # set every pixel to 255
-    mask_arr = np.ones((DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE), dtype=np.uint8) * 255
-    mask_img = Image.fromarray(mask_arr).convert('L')
-    mask_img.save(save_mask_filename)
-    st.sidebar.write(f"Saved {save_mask_filename}")
-
 ## compute input image dimensions for later scaling
 try:
     nx, ny, nd = np.array(image_to_annotate).shape
 except: # 1band greyscale
     nx, ny = np.array(image_to_annotate).shape
+
+save_mask_filename = Path(mask_dir, image_to_annotate_name)
+
+if st.sidebar.button(f"Mark as 100% background and save"): # set every pixel to 0
+    mask_arr = np.zeros((nx, ny), dtype=np.uint8)
+    mask_img = Image.fromarray(mask_arr).convert('L')
+    mask_img.save(save_mask_filename)
+    st.sidebar.write(f"Saved {save_mask_filename}")
+
+if st.sidebar.button(f"Mark as 100% target and save"): # set every pixel to 255
+    mask_arr = np.ones((nx, ny), dtype=np.uint8) * 255
+    mask_img = Image.fromarray(mask_arr).convert('L')
+    mask_img.save(save_mask_filename)
+    st.sidebar.write(f"Saved {save_mask_filename}")
 
 # Otherwise draw the mask
 
