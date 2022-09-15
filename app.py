@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
-from PIL import Image
+# exiftags are to check for a rotated image
+from PIL import Image, ExifTags
 from streamlit_drawable_canvas import st_canvas
 from pathlib import Path
 import os
@@ -14,7 +15,11 @@ DEFAULT_MASKS_DIR = Path("masks").resolve() # use absolutes
 
 st.sidebar.subheader("Binary segmentation annotation app")
 st.sidebar.text("Click the image to annotate. \nRight mouse click to complete a poly")
-uploaded_image = st.sidebar.file_uploader("Image to annotate:", type=["png"]) # , "jpg", "jpeg", "tiff", "tif"
+# uploaded_image = st.sidebar.file_uploader("Image to annotate:", type=["png"]) # , "jpg", "jpeg", "tiff", "tif"
+
+# why limit to just pngs?
+uploaded_image = st.sidebar.file_uploader("Image to annotate:", type=["png", "jpg", "jpeg", "tiff", "tif"]) 
+
 mask_dir = st.sidebar.text_input('Mask directory path:', DEFAULT_MASKS_DIR) # where masks will be saved
 if mask_dir != DEFAULT_MASKS_DIR:
     if not os.path.exists(mask_dir):
@@ -22,6 +27,21 @@ if mask_dir != DEFAULT_MASKS_DIR:
 
 if uploaded_image: 
     image_to_annotate = Image.open(uploaded_image)
+
+    # detect image orientation
+    for orientation in ExifTags.TAGS.keys():
+        if ExifTags.TAGS[orientation]=='Orientation':
+            break
+    exif=dict(image_to_annotate._getexif().items())
+
+    # if necessary, correct image orientation
+    if exif[orientation] == 3:
+        image_to_annotate=image_to_annotate.rotate(180, expand=True)
+    elif exif[orientation] == 6:
+        image_to_annotate=image_to_annotate.rotate(270, expand=True)
+    elif exif[orientation] == 8:
+        image_to_annotate=image_to_annotate.rotate(90, expand=True)
+
     image_to_annotate_name = uploaded_image.name
     st.text(f"Annotating {image_to_annotate_name}")
 else: # for testing
@@ -41,6 +61,12 @@ if st.sidebar.button(f"Mark as 100% target and save"): # set every pixel to 255
     mask_img = Image.fromarray(mask_arr).convert('L')
     mask_img.save(save_mask_filename)
     st.sidebar.write(f"Saved {save_mask_filename}")
+
+## compute input image dimensions for later scaling
+try:
+    nx, ny, nd = np.array(image_to_annotate).shape
+except: # 1band greyscale
+    nx, ny = np.array(image_to_annotate).shape
 
 # Otherwise draw the mask
 
@@ -69,6 +95,11 @@ if canvas_result.image_data is not None: # if there is annotation generate the 
 
     if st.button(f"Save mask"):
         mask_img = Image.fromarray(mask_arr).convert('L')
+
+        #rescale images back to original size
+        size = ny, nx
+        mask_img = mask_img.resize(size)
+
         mask_img.save(save_mask_filename)
         st.write(f"Saved {save_mask_filename}")
 
