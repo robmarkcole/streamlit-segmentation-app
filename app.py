@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
-# exiftags are to check for a rotated image
-from PIL import Image, ExifTags
+from PIL import Image
 from streamlit_drawable_canvas import st_canvas
 from pathlib import Path
 import os
@@ -27,20 +26,6 @@ if mask_dir != DEFAULT_MASKS_DIR:
 
 if uploaded_image: 
     image_to_annotate = Image.open(uploaded_image)
-
-    # detect image orientation
-    for orientation in ExifTags.TAGS.keys():
-        if ExifTags.TAGS[orientation]=='Orientation':
-            break
-    exif=dict(image_to_annotate._getexif().items())
-
-    # if necessary, correct image orientation
-    if exif[orientation] == 3:
-        image_to_annotate=image_to_annotate.rotate(180, expand=True)
-    elif exif[orientation] == 6:
-        image_to_annotate=image_to_annotate.rotate(270, expand=True)
-    elif exif[orientation] == 8:
-        image_to_annotate=image_to_annotate.rotate(90, expand=True)
 
     image_to_annotate_name = uploaded_image.name
     st.text(f"Annotating {image_to_annotate_name}")
